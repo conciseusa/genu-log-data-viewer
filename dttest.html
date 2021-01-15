@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<script type="text/javascript" language="javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.23/fh-3.1.7/datatables.min.css"/>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.23/fh-3.1.7/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+<body>
+
+	<script type = "text/javascript">
+		const queryString = window.location.search; // https://www.sitepoint.com/get-url-parameters-with-javascript/
+		const urlParams = new URLSearchParams(queryString);
+		const stationId = urlParams.get('stationId')
+		console.log(stationId);
+		if (stationId === null) {
+			console.log('stationId missing');
+		}
+
+		$(document).ready(function() {
+			
+			var table = $('#log').DataTable( {
+				"paging": false,
+				"info": false,
+				"fixedHeader": true,
+				"serverSide": false,
+				"ajax": {
+				    "url": "https://staging-api.genulogd1.com/get-day-data?stationId="+stationId,
+				    "dataSrc": function ( json ) {
+						var Items = json.data.Items
+						console.log(Items);
+						var rows = []
+						var j = 0;
+				        for ( var i=0, ien=Items.length; i<ien; i++) {
+					        console.log(Items[i].Time);
+					        if (typeof Items[i].Time !== 'undefined') { // filter out any items that do not have a Time
+					            rows[j++] = Items[i]; // reindex so rows data has no index holes
+					        }
+				        }
+				        return rows;
+				    }
+			    },
+				"columns": [
+				    { "data": "Time" ,
+					  "render": function ( data, type, row, meta ) {
+						  var momentDate = moment(data, 'YYYY-MM-DDTHH:mm:ss+-HH:mm:ss');
+                          return type === "display" || type === "filter" ?
+						    momentDate.format('lll') :
+							momentDate.format();
+                      } },
+					{ "data": "A0" },
+					{ "data": "A1",
+					  "render": function ( data, type, row, meta ) {
+                          return parseInt(data)/10;
+                      } },
+					{ "data": "A2",
+					  "render": function ( data, type, row, meta ) {
+                          return ((parseInt(data) < 10) ? 'Full' : '');
+                      } },
+					{ "data": "D7",
+					  "render": function ( data, type, row, meta ) {
+                          return ((parseInt(data) == 0) ? 'Run' : '');
+                      } },
+				],
+				"order": [[ 0, 'desc' ]]
+			} ); // end var table
+		} );
+		
+	</script>
+
+    <table id="log" class="display" style="width:100%">
+        <thead>
+            <tr>
+				<th>Time</th>
+				<th>Temp</th>
+                <th>Batt V</th>
+                <th>Batt Full</th>
+                <th>Well Run</th>
+            </tr>
+        </thead>
+        <tfoot>
+            <tr>
+				<th>Time</th>
+				<th>Temp</th>
+                <th>Batt V</th>
+                <th>Batt Full</th>
+                <th>Well Run</th>
+            </tr>
+        </tfoot>
+    </table>
+    
+</body>
+</html>
